@@ -21,8 +21,8 @@
 #include "../columns_ui-sdk/ui_extension.h"
 
 /** Declare some component information */
-DECLARE_COMPONENT_VERSION("Console panel",
-"0.5",
+DECLARE_COMPONENT_VERSION("Console panel mod",
+"0.5mod",
 "compiled: " __DATE__ "\n"
 "with Panel API version: " UI_EXTENSION_VERSION
 
@@ -53,7 +53,7 @@ struct create_guid : public GUID
 	}
 };
 
-cfg_int cfg_frame(create_guid(0x05550547,0xbf98,0x088c,0xbe,0x0e,0x24,0x95,0xe4,0x9b,0x88,0xc7),2);
+cfg_int cfg_frame(create_guid(0x05550547,0xbf98,0x088c,0xbe,0x0e,0x24,0x95,0xe4,0x9b,0x88,0xc7),0);
 
 // {26059FEB-488B-4ce1-824E-4DF113B4558E}
 static const GUID g_guid_console_font = 
@@ -306,11 +306,13 @@ void console_window::update_content_throttled()
 
 LRESULT console_window::on_message(HWND wnd,UINT msg,WPARAM wp,LPARAM lp)
 {
+	HBRUSH g_hbrBackground = CreateSolidBrush(RGB(42, 42, 42));
 
 	switch(msg)
 	{
 	case WM_CREATE:
 		{
+			
 			/**
 			* Store a pointer to ourselve in this list, used for global notifications (in the main thread)
 			* which updates instances of our panel.
@@ -328,9 +330,18 @@ LRESULT console_window::on_message(HWND wnd,UINT msg,WPARAM wp,LPARAM lp)
 			else if (cfg_frame == 2) flags |= WS_EX_STATICEDGE;
 
 			/** Create our edit window */
-			wnd_edit = CreateWindowEx(flags, WC_EDIT, _T(""),
-				WS_CHILD | WS_VISIBLE | WS_TABSTOP | ES_AUTOVSCROLL | WS_VSCROLL | ES_READONLY | ES_MULTILINE, 0, 0, 0, 0,
+			wnd_edit = CreateWindowEx(0, WC_EDIT, _T(""),
+				WS_CHILD | WS_VISIBLE | WS_TABSTOP | ES_AUTOVSCROLL | ES_READONLY | ES_MULTILINE, 0, 0, 0, 0,
 				wnd, HMENU(IDC_EDIT), core_api::get_my_instance(), NULL);
+
+			//** Transperacy test **
+		//	  SetWindowLong(wnd,
+		//		GWL_EXSTYLE,
+		//		GetWindowLong(wnd, GWL_EXSTYLE) | WS_EX_LAYERED);
+			
+		//	SetLayeredWindowAttributes(wnd, COLORREF RGB(240,240,240), 0, LWA_COLORKEY);
+		
+			
 
 			if (wnd_edit)
 			{
@@ -348,7 +359,6 @@ LRESULT console_window::on_message(HWND wnd,UINT msg,WPARAM wp,LPARAM lp)
 				/** Subclass the edit window */
 				m_editproc = (WNDPROC)SetWindowLongPtr(wnd_edit,GWL_WNDPROC,(LPARAM)(hook_proc));
 
-				SendMessage(wnd, MSG_UPDATE, 0, 0);
 			}
 		}
 		break;
@@ -375,6 +385,16 @@ LRESULT console_window::on_message(HWND wnd,UINT msg,WPARAM wp,LPARAM lp)
 		break;
 	case WM_ERASEBKGND:
 		return FALSE;
+	case WM_CTLCOLORDLG:
+		return (LONG)g_hbrBackground;
+	case WM_CTLCOLORSTATIC:
+	{
+		HDC hdcStatic = (HDC)wp;
+		SetTextColor(hdcStatic, RGB(255,255,255));
+		SetBkMode(hdcStatic, TRANSPARENT);
+		return (LONG)g_hbrBackground;
+	}
+	break;
 	case WM_DESTROY:
 		{
 			wnd_edit=0;
@@ -474,7 +494,7 @@ LRESULT console_window::on_hook(HWND wnd,UINT msg,WPARAM wp,LPARAM lp)
 
 void console_window::get_name(pfc::string_base & out)const
 {
-	out.set_string("Console");
+	out.set_string("Console_mod");
 }
 void console_window::get_category(pfc::string_base & out)const
 {
@@ -486,7 +506,7 @@ void console_window::get_category(pfc::string_base & out)const
 * and generate your own using GUIDGEN.
 */
 const GUID console_window::extension_guid = 
-{ 0x3c85d0a9, 0x19d5, 0x4144, { 0xbc, 0xc2, 0x94, 0x9a, 0xb7, 0x64, 0x23, 0x3a } };
+{ 0x68773a7c, 0x9895, 0x4690,{ 0x9a, 0x4b, 0x96, 0xd6, 0x6, 0x9b, 0xbc, 0x23 } };
 
 ui_extension::window_factory<console_window> blah;
 
@@ -518,7 +538,7 @@ public:
 	}
 	virtual void get_name (pfc::string_base & p_out) const
 	{
-		p_out = "Console";
+		p_out = "Console_mod";
 	}
 
 	virtual cui::fonts::font_type_t get_default_font_type() const
